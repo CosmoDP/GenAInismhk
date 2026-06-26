@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuizLens — AI Answer Scanner</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&family=JetBrains+Mono:wght=400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,7 +18,7 @@
     --accent: #3b82f6;
     --accent-glow: rgba(59,130,246,0.15);
     --green: #22c55e;
-    --green-dim: rgba(34,197,94,0.15);
+    --green-dim: rgba(34,197,94,0.10);
     --red: #ef4444;
     --amber: #f59e0b;
     --text: #e2e8f0;
@@ -55,8 +55,8 @@
 
   /* ── Sidebar ── */
   aside { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-  .panel { padding: 14px 18px; border-bottom: 1px solid var(--border); }
-  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .panel { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
 
   label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; font-weight: 500; }
   input[type="text"], input[type="password"], input[type="number"], textarea, select {
@@ -66,7 +66,7 @@
   }
   input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
   input[type="password"] { font-family: var(--mono); }
-  textarea { resize: vertical; min-height: 60px; }
+  textarea { resize: vertical; min-height: 70px; }
 
   .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; font-family: var(--sans); width: 100%; justify-content: center; }
   .btn-primary { background: var(--accent); color: #fff; padding: 11px; }
@@ -80,81 +80,480 @@
   /* ── Camera ── */
   .camera-wrapper { position: relative; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface2); border: 1px solid var(--border); aspect-ratio: 4/3; margin-bottom: 10px; }
   #video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .camera-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: #ef4444; font-size: 11px; text-align: center; padding: 16px; background: rgba(0,0,0,0.4); font-weight: 500; }
-  .scan-ring { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+  .camera-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px; background: rgba(17, 19, 24, 0.85); z-index: 2; }
+  .camera-overlay svg { width: 32px; height: 32px; opacity: 0.35; margin-bottom: 4px; }
+  .scan-ring { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 3; }
   .scan-ring.active { opacity: 1; }
   .scan-ring::before { content: ''; position: absolute; inset: 6px; border: 2px solid var(--accent); border-radius: 6px; animation: scanpulse 0.8s ease-in-out; }
   @keyframes scanpulse { 0% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-glow); } 100% { opacity: 0; box-shadow: 0 0 0 20px transparent; } }
-  .timer-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); transition: width 1s linear; width: 0%; }
-  .countdown-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; border: 1px solid rgba(59,130,246,0.3); backdrop-filter: blur(4px); }
+  .timer-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); transition: width 1s linear; width: 0%; z-index: 3; }
+  .countdown-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; border: 1px solid rgba(59,130,246,0.3); backdrop-filter: blur(4px); z-index: 3; }
   .api-key-row { position: relative; }
   .toggle-key { position: absolute; right: 8px; top: 8px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 12px; padding: 0; }
 
   /* ── RIGHT SIDE ── */
-  .right { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
+  .right { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 
+  /* Stats bar top */
   .stats-bar { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; border-right: 1px solid var(--border); font-family: var(--mono); }
+  .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 8px; border-right: 1px solid var(--border); font-family: var(--mono); }
   .stat-item:last-child { border-right: none; }
-  .stat-val { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
-  .stat-label { font-size: 9px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
 
+  /* ── BIG ANSWER AREA ── */
   .answer-area {
     flex: 1;
-    padding: 20px;
+    overflow-y: auto;
+    padding: 28px 36px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-    gap: 12px;
+    gap: 0;
   }
 
-  .idle-screen, .loading-view, .error-view, .no-q-view { 
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; color: var(--text-muted); 
-  }
-  .idle-screen svg { width: 50px; height: 50px; opacity: 0.2; }
-  .idle-screen h2 { font-size: 20px; font-weight: 700; color: var(--text-dim); }
-  
-  .big-spinner { width: 44px; height: 44px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  /* Idle */
+  .idle-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; color: var(--text-muted); }
+  .idle-screen svg { width: 60px; height: 60px; opacity: 0.2; }
+  .idle-screen h2 { font-size: 22px; font-weight: 700; color: var(--text-dim); }
+  .idle-screen p { font-size: 14px; max-width: 320px; line-height: 1.7; }
+
+  /* Loading */
+  .loading-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; }
+  .big-spinner { width: 52px; height: 52px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-label { font-size: 16px; font-weight: 600; color: var(--text-dim); }
+  .loading-sub { font-size: 13px; color: var(--text-muted); }
 
-  .q-section { flex-shrink: 0; }
-  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
-  .q-box { font-size: 14px; font-weight: 500; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; max-height: 70px; overflow-y: auto; }
+  /* Question */
+  .q-section { margin-bottom: 20px; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .q-box { font-size: 19px; font-weight: 600; color: var(--text); line-height: 1.55; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 20px 24px; }
 
-  .answers-section { 
-    flex: 1; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
+  /* Answers */
+  .answers-section { margin-bottom: 20px; }
+  .answers-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .opt { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-radius: var(--radius); border: 2px solid var(--border); background: var(--surface); transition: all 0.2s; animation: popIn 0.2s ease both; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .opt.correct { border-color: var(--green); background: var(--green-dim); }
+  .opt.wrong { opacity: 0.35; }
+  .opt-badge { font-family: var(--mono); font-size: 13px; font-weight: 700; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--border2); color: var(--text-muted); margin-top: 1px; }
+  .opt.correct .opt-badge { background: var(--green); color: #000; }
+  .opt-text { flex: 1; font-size: 16px; line-height: 1.5; padding-top: 6px; }
+  .opt.correct .opt-text { font-weight: 600; color: #fff; }
+  .check { font-size: 20px; flex-shrink: 0; margin-top: 5px; display: none; }
+  .opt.correct .check { display: block; color: var(--green); }
+
+  /* Explanation */
+  .expl-box { background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--radius); padding: 18px 22px; font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+  .expl-box b { color: var(--accent); }
+
+  /* Error view */
+  .error-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+  .error-view .err-icon { font-size: 44px; }
+  .error-view h3 { font-size: 18px; font-weight: 700; color: var(--red); }
+  .error-view p { font-size: 13px; color: var(--text-muted); max-width: 340px; line-height: 1.65; }
+
+  /* No question */
+  .no-q-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; color: var(--text-muted); }
+  .no-q-view .icon { font-size: 38px; }
+  .no-q-view p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  /* Snapshot thumbnail */
+  .snap-thumb { width: 100px; height: 75px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border2); flex-shrink: 0; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto; }
+
+  /* Timestamp */
+  .ts { font-size: 11px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 20px; display: block; text-align: right; }
+
+  canvas { display: none; }
+
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); max-height: 55vh; }
+    .answer-area { padding: 20px 16px; }
+    .q-box { font-size: 16px; }
+    .opt-text { font-size: 15px; }
   }
-  .answers-list { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-    justify-content: center;
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    QuizLens
+  </div>
+  <div class="status-pill">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">Inicjalizacja...</span>
+  </div>
+</header>
+
+<main>
+  <aside>
+
+    <div class="panel">
+      <div class="panel-title">OpenRouter API</div>
+      <label>Klucz API</label>
+      <div class="api-key-row">
+        <input type="password" id="apiKey" placeholder="sk-or-..." autocomplete="off">
+        <button class="toggle-key" onclick="toggleKey()">👁</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted)">
+        Klucz: <a href="https://openrouter.ai/settings/keys" target="_blank" style="color:var(--accent)">openrouter.ai/settings/keys</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kamera</div>
+      <div class="camera-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="camera-overlay" id="cameraOverlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.889L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+          </svg>
+          Kliknij START lub zezwól na kamerę
+        </div>
+        <div class="scan-ring" id="scanRing"></div>
+        <div class="timer-bar" id="timerBar"></div>
+        <div class="countdown-badge" id="countdown" style="display:none"></div>
+      </div>
+      <label>Wybór kamery</label>
+      <select id="cameraSelect"><option value="">Wczytywanie...</option></select>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ustawienia</div>
+      <label>Model Vision AI</label>
+      <select id="modelSelect">
+        <option value="google/gemini-2.5-flash:free">google/gemini-2.5-flash:free (Darmowy/Najszybszy)</option>
+        <option value="meta-llama/llama-3.2-11b-vision-instruct:free">meta-llama/llama-3.2-11b-vision-instruct:free</option>
+      </select>
+      <label>Interwał skanowania (sekundy)</label>
+      <input type="number" id="interval" value="10" min="3" max="300">
+      <label>Kontekst (wysyłany z każdym pytaniem)</label>
+      <textarea id="context" placeholder="np. Test z biologii klasa 8. Odpowiedz po polsku."></textarea>
+    </div>
+
+    <div class="panel" style="border-bottom:none">
+      <button class="btn btn-primary" id="startBtn" onclick="startScanning()">▶ START</button>
+      <button class="btn btn-danger" id="stopBtn" onclick="stopScanning()" style="display:none">⏹ STOP</button>
+      <button class="btn btn-ghost" onclick="captureNow()">📸 Zrób zdjęcie teraz</button>
+    </div>
+
+  </aside>
+
+  <div class="right">
+
+    <div class="stats-bar" id="statsBar" style="display:none">
+      <div class="stat-item"><span class="stat-val" id="statScans">0</span><span class="stat-label">skanów</span></div>
+      <div class="stat-item"><span class="stat-val" id="statAnswers">0</span><span class="stat-label">odpowiedzi</span></div>
+      <div class="stat-item"><span class="stat-val" id="statErrors">0</span><span class="stat-label">błędów</span></div>
+    </div>
+
+    <div class="answer-area" id="answerArea">
+      <div class="idle-screen" id="idleScreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <h2>Gotowy do skanowania</h2>
+        <p>Wpisz klucz API OpenRouter, ustaw parametry i kliknij START. Odpowiedzi pojawią się automatycznie.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<canvas id="canvas"></canvas>
+
+<script>
+let stream = null, intervalId = null, countdownId = null;
+let countdownVal = 0, scanning = false;
+let stats = { scans: 0, answers: 0, errors: 0 };
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx2d = canvas.getContext('2d');
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadCameras();
+  const savedKey = localStorage.getItem('ql_api_key');
+  if (savedKey) document.getElementById('apiKey').value = savedKey;
+});
+
+function toggleKey() {
+  const inp = document.getElementById('apiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function initCamera(deviceId) {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  const constraints = { video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'environment' }, audio: false };
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    document.getElementById('cameraOverlay').style.display = 'none';
+    updateStatus('active', 'Kamera aktywna');
+    return true;
+  } catch(e) { 
+    updateStatus('error', 'Błąd kamery');
+    alert('Brak dostępu do kamery: ' + e.message); 
+    return false; 
+  }
+}
+
+async function loadCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const sel = document.getElementById('cameraSelect');
+    sel.innerHTML = '<option value="">Domyślna (Tył)</option>';
+    let count = 0;
+    devices.filter(d => d.kind === 'videoinput').forEach((c, i) => {
+      const o = document.createElement('option');
+      o.value = c.deviceId;
+      o.textContent = c.label || `Kamera ${++count}`;
+      sel.appendChild(o);
+    });
+    updateStatus('active', 'Gotowy');
+  } catch(_) {
+    updateStatus('error', 'Brak uprawnień');
+  }
+}
+
+document.getElementById('cameraSelect').addEventListener('change', e => {
+  initCamera(e.target.value);
+});
+
+function captureFrame() {
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  ctx2d.drawImage(video, 0, 0);
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+function flashScan() {
+  const r = document.getElementById('scanRing');
+  r.classList.remove('active'); void r.offsetWidth; r.classList.add('active');
+  setTimeout(() => r.classList.remove('active'), 900);
+}
+
+function startCountdown(seconds) {
+  const bar = document.getElementById('timerBar');
+  const badge = document.getElementById('countdown');
+  badge.style.display = 'block';
+  countdownVal = seconds;
+  badge.textContent = countdownVal + 's';
+  bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+  bar.style.transition = `width ${seconds}s linear`; bar.style.width = '0%';
+  clearInterval(countdownId);
+  countdownId = setInterval(() => {
+    countdownVal--;
+    badge.textContent = countdownVal + 's';
+    if (countdownVal <= 0) clearInterval(countdownId);
+  }, 1000);
+}
+
+function updateStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  dot.className = 'dot';
+  if (state === 'active') dot.classList.add('active');
+  if (state === 'scanning') dot.classList.add('scanning');
+  txt.textContent = text;
+}
+
+function updateStats() {
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('statScans').textContent = stats.scans;
+  document.getElementById('statAnswers').textContent = stats.answers;
+  document.getElementById('statErrors').textContent = stats.errors;
+}
+
+async function executeScan() {
+  if (!stream && !(await initCamera(document.getElementById('cameraSelect').value))) return;
+  
+  flashScan();
+  const fullDataUrl = captureFrame();
+  const base64Data = fullDataUrl.split(',')[1];
+  
+  stats.scans++;
+  updateStats();
+  showLoading(fullDataUrl);
+  
+  try {
+    const result = await askGemini(base64Data);
+    if (result.question === null) {
+      showNoQuestion();
+    } else {
+      stats.answers++;
+      showAnswer(result, fullDataUrl);
+    }
+  } catch (err) {
+    stats.errors++;
+    showError(err.message);
+  }
+  updateStats();
+  
+  if (scanning) {
+    const nextSec = parseInt(document.getElementById('interval').value) || 10;
+    startCountdown(nextSec);
+  }
+}
+
+async function askGemini(imageBase64) {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) throw new Error('Brak klucza API OpenRouter.');
+  localStorage.setItem('ql_api_key', apiKey);
+
+  const context = document.getElementById('context').value.trim();
+  const selectedModel = document.getElementById('modelSelect').value;
+
+  const prompt = `Jesteś asystentem rozwiązującym pytania testowe.
+Zadanie:
+1. Rozpoznaj pytanie na zdjęciu
+2. Zidentyfikuj opcje odpowiedzi (A, B, C, D itp.) jeśli są
+3. Wskaż WSZYSTKIE POPRAWNE odpowiedzi
+4. Krótko wyjaśnij dlaczego
+
+${context ? 'Kontekst: ' + context : ''}
+
+Odpowiedz TYLKO w formacie JSON (bez markdown, bez backticks):
+{"question":"treść pytania","answers":[{"label":"A","text":"opcja","correct":true}],"explanation":"wyjaśnienie"}
+
+Jeśli brak pytania: {"question":null,"answers":[],"explanation":"Nie wykryto pytania."}`;
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'QuizLens'
+    },
+    body: JSON.stringify({
+      model: selectedModel,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+          ]
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 1024
+    })
+  });
+
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+
+  const data = await res.json();
+  const text = (data.choices?.[0]?.message?.content || '').trim();
+  const clean = text.replace(/```json|```/g, '').trim();
+  const match = clean.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('API nie zwróciło poprawnego JSON. Odpowiedź: ' + text.slice(0, 200));
+  return JSON.parse(match[0]);
+}
+
+function setAreaContent(html) {
+  document.getElementById('answerArea').innerHTML = html;
+}
+
+function showLoading(thumbSrc) {
+  setAreaContent(`
+    <div class="loading-view">
+      <img src="${thumbSrc}" class="snap-thumb">
+      <div class="big-spinner"></div>
+      <div class="loading-label">Analizuję pytanie…</div>
+      <div class="loading-sub">OpenRouter analizuje zdjęcie</div>
+    </div>
+  `);
+}
+
+function showNoQuestion() {
+  setAreaContent(`
+    <div class="no-q-view">
+      <div class="icon">📷</div>
+      <p>Nie wykryto żadnego pytania. Skieruj kamerę bezpośrednio na tekst.</p>
+    </div>
+  `);
+}
+
+function showError(msg) {
+  setAreaContent(`
+    <div class="error-view">
+      <div class="err-icon">⚠️</div>
+      <h3>Wystąpił błąd</h3>
+      <p>${msg}</p>
+    </div>
+  `);
+}
+
+function showAnswer(result, thumbSrc) {
+  const time = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const answersHtml = result.answers.map((a, i) => `
+    <div class="opt ${a.correct ? 'correct' : 'wrong'}" style="animation-delay:${i * 0.06}s">
+      <div class="opt-badge">${a.label}</div>
+      <div class="opt-text">${a.text}</div>
+      <div class="check">✓</div>
+    </div>
+  `).join('');
+
+  setAreaContent(`
+    <span class="ts">Ostatni skan: ${time}</span>
+    <img src="${thumbSrc}" class="snap-thumb" style="float:right; margin: 0 0 10px 10px;">
+    
+    <div class="q-section">
+      <div class="section-label">Wykryte Pytanie</div>
+      <div class="q-box">${result.question}</div>
+    </div>
+    
+    <div class="answers-section">
+      <div class="section-label">Opcje Odpowiedzi</div>
+      <div class="answers-list">${answersHtml}</div>
+    </div>
+    
+    <div class="section-label">Wyjaśnienie AI</div>
+    <div class="expl-box"><b>Uzasadnienie:</b> ${result.explanation}</div>
+  `);
+}
+
+async function startScanning() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Wprowadź swój klucz API.'); return; }
+  
+  if (!stream) {
+    const ok = await initCamera(document.getElementById('cameraSelect').value);
+    if (!ok) return;
   }
 
-  .opt { 
-    display: flex; 
-    align-items: center; 
-    gap: 16px; 
-    padding: 16px 22px; 
-    border-radius: var(--radius); 
-    border: 2px solid var(--border); 
-    background: var(--surface); 
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    animation: popIn 0.2s ease both; 
-  }
-  @keyframes popIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
-  
-  .opt.correct { 
-    border-color: var(--green); 
-    background: var(--green-dim); 
-    box-shadow: 0 0 12px rgba(34,197,94,0.12);
-    transform: scale(1.01);
-  }
-  .opt.wrong { opacity: 0.25; filter: blur(0.4px); }
-  
-  .opt-badge { font-family: var(--mono); font-size: 15px; font-weight: 800; width: 36px; height: 36px
-  
+  scanning = true;
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'block';
+  updateStatus('scanning', 'Skanowanie...');
+
+  await executeScan();
+  const intervalSec = parseInt(document.getElementById('interval').value) || 10;
+  intervalId = setInterval(executeScan, intervalSec * 1000);
+}
+
+function stopScanning() {
+  scanning = false;
+  clearInterval(intervalId);
+  clearInterval(countdownId);
+  document.getElementById('startBtn').style.display = 'block';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('countdown').style.display = 'none';
+  document.getElementById('timerBar').style.width = '0%';
+  updateStatus('active', 'Gotowy');
+}
+
+async function captureNow() {
+  if (scanning) stopScanning();
+  await executeScan();
+}
+</script>
+</body>
+</html>
